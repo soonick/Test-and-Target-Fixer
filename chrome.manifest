@@ -1,0 +1,4 @@
+content	tntfixer chrome/content/
+skin	tntfixer	classic	chrome/skin/
+overlay chrome://browser/content/browser.xul	chrome://tntfixer/content/tntfixer.xul
+
