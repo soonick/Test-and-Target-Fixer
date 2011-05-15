@@ -2,9 +2,10 @@
 <?xml-stylesheet href="chrome://tntfixer/skin/overlay.css" type="text/css"?>
 <overlay id="tntfixer"
 		xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<script src="chrome://tntfixer/content/tntfixer.js" />
 	<statusbar id="status-bar">
 		<statusbarpanel id="tntFixerPanel">
-			<image id="tntFixerStatusBarIcon" /><!--src="chrome://tntfixer/skin/status-bar-icon-active2.png"-->
+			<image id="tntFixerStatusBarIcon" />
 		</statusbarpanel>
 	</statusbar>
 </overlay>
