@@ -1,1 +1,37 @@
-Fixes some problems with T&T UI
+This is a Firefox plugin that fixes some problems with Test and Target UI.
+
+
+Instruction for developing this plugin.
+(https://developer.mozilla.org/en/Setting_up_extension_development_environment)
+
+1.- Create a profile for development in firefox
+	- Windows: Start -> Run "%ProgramFiles%\Mozilla Firefox\firefox.exe" -no-remote -P dev
+	- Linux: /usr/bin/firefox -no-remote -P dev
+	The first time you run this command a window to create choose a profile will
+	pop up. Click "Create profile" and create a profile with the name "dev".
+	The next time you execute the command firefox will start using that profile.
+2.- Modify browser preferences for development
+	Type in the address bar "about:config". Not all preferences are defined by
+	default, and are therefore not listed in about:config by default. You will
+	have to create new (boolean) entries for them.
+	And add or modify this preferences:
+	javascript.options.showInConsole = true
+	nglayout.debug.disable_xul_cache = true
+	browser.dom.window.dump.enabled = true
+	javascript.options.strict = true
+	devtools.chrome.enabled = true
+	extensions.logging.enabled = true
+	nglayout.debug.disable_xul_fastload = true
+	dom.report_all_js_exceptions = true
+3.- Point to your development folder
+	You can download the project, uncompress it, and place the folder where ever
+	you feel confortable in your file system. (You can also download it via
+	github if you want to contribute to the project)
+	Go to your firefox profiles folder (Locations varies from OS) and open
+	your dev folder the name will be something like u66sxcxw.dev, the "dev"
+	is what you are looking for. Create a folder with the name "extensions" if
+	it doesn't already exist. Create an empty file with the name
+	"tntfixer@tntfixer.net". Add the file and add the complete path to the
+	project folder.
+4.- Restart firefox and start it with your dev profile (1).
+
