@@ -154,6 +154,12 @@ var tntfixer =
 	 */
 	'confirmDisapproveCampaign': function(e)
 	{
+		//	We only proceed when the actual save button was clicked
+		if ('campaign-save' != e.target.id)
+		{
+			return;
+		}
+
 		var text = 'This campaign is currently active. If you proceed your ' +
 				'changes will be saved and your campaign disapproved';
 		if (!confirm(text))
