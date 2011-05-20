@@ -125,22 +125,42 @@ var tntfixer =
 	{
 		if (-1 != tntfixer.getCurrentDomain().indexOf(tntfixer.pattern))
 		{
-			var el = gBrowser.getBrowserForTab(gBrowser.selectedTab).contentDocument.getElementById('international').parentNode;
-			el.addEventListener(
-				'click',
-				function(e)
-				{
-					if ('international' == e.target.id)
-					{
-						alert(4);
-						e.stopPropagation();
-					}
-				},
-				true
-			);
+			var currentDocument = gBrowser.getBrowserForTab(gBrowser.selectedTab)
+					.contentDocument;
+			//	If the campaign is approved then alert that hitting save
+			//	deactivates the offer
+			var isActive = false;
+			var divs = currentDocument.getElementsByClassName('approved_campaign');
+			if ('approved' == divs[0].innerHTML.toLowerCase())
+			{
+				isActive = true;
+			}
+			if (isActive)
+			{
+				var saveButton = currentDocument.getElementById('campaign-save');
+				saveButton.parentNode.addEventListener(
+					'click',
+					tntfixer.confirmDisapproveCampaign,
+					true
+				);
+			}
+		}
+	},
+	/**
+	 *	confirmDisapproveCampaign
+	 *	Attaches a confirm dialog to the save campaign button
+	 *
+	 *	@return	void
+	 */
+	'confirmDisapproveCampaign': function(e)
+	{
+		var text = 'This campaign is currently active. If you proceed your ' +
+				'changes will be saved and your campaign disapproved';
+		if (!confirm(text))
+		{
+			e.stopPropagation();
 		}
 	}
-	
 };
 
 //	Initialize at startup
