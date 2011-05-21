@@ -7,7 +7,7 @@ Instruction for developing this plugin.
 1.- Create a profile for development in firefox
 	- Windows: Start -> Run "%ProgramFiles%\Mozilla Firefox\firefox.exe" -no-remote -P dev
 	- Linux: /usr/bin/firefox -no-remote -P dev
-	The first time you run this command a window to create choose a profile will
+	The first time you run this command a window to choose a profile will
 	pop up. Click "Create profile" and create a profile with the name "dev".
 	The next time you execute the command firefox will start using that profile.
 2.- Modify browser preferences for development
