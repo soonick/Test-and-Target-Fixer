@@ -1,10 +1,10 @@
 #tntFixerStatusBarIcon[value='active']
 {
-	list-style-image: url('chrome://tntfixer/skin/status-bar-icon-active.png');
+	list-style-image: url('chrome://tntfixer/skin/images/status-bar-icon-active.png');
 }
 
 #tntFixerStatusBarIcon[value='inactive']
 {
-	list-style-image: url('chrome://tntfixer/skin/status-bar-icon-inactive.png');
+	list-style-image: url('chrome://tntfixer/skin/images/status-bar-icon-inactive.png');
 }
 
