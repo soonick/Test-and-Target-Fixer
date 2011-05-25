@@ -13,7 +13,7 @@ var tntfixer =
 	 */
 	 'pattern': 'omniture.com',
 	/**
-	 *	Number of open tabs that match the pattern
+	 *	Number of open tabs that match the pattern in all windows
 	 */
 	 'matchedTabs': 0,
 	/**
@@ -26,6 +26,18 @@ var tntfixer =
 	 */
 	'init': function()
 	{
+		// Listeners to count tabs at startup
+		var currentTab = gBrowser.getBrowserForTab(gBrowser.selectedTab);
+		currentTab.addEventListener('load', tntfixer.getNumberOfTntTabs, true);
+		window.removeEventListener('load', tntfixer.init, false);
+		window.addEventListener("focus", tntfixer.getNumberOfTntTabs, false);
+
+		// Listeners to count tabs when opening or closing windows or tabs
+		var container = gBrowser.tabContainer;
+		container.addEventListener("TabClose", tntfixer.verifyClosedTab, true);
+		container.addEventListener("TabOpen", tntfixer.verifyOpenedTab, true);
+		window.addEventListener("unload", tntfixer.unload, false);
+
 		//	Preferences manager
 		tntfixer.preferences = Components
 				.classes["@mozilla.org/preferences-service;1"].getService(
@@ -68,40 +80,100 @@ var tntfixer =
 	{
 		if ('active' == tntfixer.statusBarIcon.getAttribute('value'))
 		{
-			tntfixer.statusBarIcon.setAttribute('value', 'inactive');
-			tntfixer.preferences.setCharPref('status', 'inactive');
+			var newStatus = 'inactive';
 		}
 		else
 		{
-			tntfixer.statusBarIcon.setAttribute('value', 'active');
-			tntfixer.preferences.setCharPref('status', 'active');
+			var newStatus = 'active';
 		}
-		tntfixer.getNumberOfTntTags();
+
+		var wm = Components.classes['@mozilla.org/appshell/window-mediator;1']
+				.getService(Components.interfaces.nsIWindowMediator);
+		var windowIter = wm.getEnumerator('navigator:browser');
+		var currentWindow;
+		while (windowIter.hasMoreElements())
+		{
+			currentWindow = windowIter.getNext();
+			currentWindow.tntfixer.statusBarIcon.setAttribute('value', newStatus);
+			currentWindow.tntfixer.preferences.setCharPref('status', newStatus);
+		}
 	},
 	/**
-	 *	getNumberOfTntTags
+	 *	verifyOpenedTab
+	 *	Checks if a newly opened tab has Tnt domain and updates matchedTabs
+	 *
+	 *	@return	void
+	 */
+	'verifyOpenedTab': function(e)
+	{
+		var browser = gBrowser.getBrowserForTab(e.target);
+		browser.addEventListener('load', tntfixer.getNumberOfTntTabs, true);
+	},
+	/**
+	 *	verifyClosedTab
+	 *	Checks if the closing tab has Tnt domain and updates matchedTabs
+	 *
+	 *	@return	void
+	 */
+	'verifyClosedTab': function(e)
+	{
+		var browser = gBrowser.getBrowserForTab(e.target);
+		if (-1 == browser.currentURI.spec.indexOf(tntfixer.pattern))
+		{
+    		return;
+		}
+
+		var wm = Components.classes['@mozilla.org/appshell/window-mediator;1']
+				.getService(Components.interfaces.nsIWindowMediator);
+
+		var windowIter = wm.getEnumerator('navigator:browser');
+		var currentWindow;	
+		while (windowIter.hasMoreElements())
+		{
+			currentWindow = windowIter.getNext();
+			currentWindow.tntfixer.matchedTabs--;
+		}
+	},
+	/**
+	 *	getNumberOfTntTabs
 	 *	Browses all the current tabs to find out how many Tnt tabs are open.
 	 *	populates matchedTabs with the number of matches found and also returns
 	 *	the value
 	 *
 	 *	@return	int		$found.- Number of curretly open Tnt tabs
 	 */
-	'getNumberOfTntTags': function()
+	'getNumberOfTntTabs': function()
 	{
-		var num = gBrowser.browsers.length;
-		var found = 0;
+		var wm = Components.classes['@mozilla.org/appshell/window-mediator;1']
+				.getService(Components.interfaces.nsIWindowMediator);
 
-		for (var i = 0; i < num; i++)
+		var windowIter = wm.getEnumerator('navigator:browser');
+		var currentWindow;	
+		var tabCount = 0;
+		while (windowIter.hasMoreElements())
 		{
-			var tab = gBrowser.getBrowserAtIndex(i);
-			if (-1 != tab.currentURI.spec.indexOf(tntfixer.pattern))
+			currentWindow = windowIter.getNext();
+			tabbrowser = currentWindow.getBrowser();
+
+			for (var i = 0; i < tabbrowser.browsers.length; i++)
 			{
-				found++;
+				var browser = tabbrowser.getBrowserAtIndex(i);
+				if (-1 != browser.currentURI.spec.indexOf(tntfixer.pattern))
+        		{
+            		tabCount++;
+        		}
 			}
 		}
 
-		tntfixer.matchedTabs = found;
-		return found;
+		var windowIter = wm.getEnumerator('navigator:browser');
+		var currentWindow;	
+		while (windowIter.hasMoreElements())
+		{
+			currentWindow = windowIter.getNext();
+			currentWindow.tntfixer.matchedTabs = tabCount;
+		}
+
+		tntfixer.matchedTabs = tabCount;
 	},
 	/**
 	 *	getCurrentDomain
@@ -166,16 +238,47 @@ var tntfixer =
 		{
 			e.stopPropagation();
 		}
+	},
+	/**
+     *	unload
+     *	When a window is closed it subtracts its matched tabs from the matchedTabs
+     *	attribute in all other windows
+     *
+     *	@return	void
+     */
+	'unload': function()
+	{
+		var tabbrowser = window.getBrowser();
+		var tabCount = 0;
+
+		for (var i = 0; i < tabbrowser.browsers.length; i++)
+		{
+			var browser = tabbrowser.getBrowserAtIndex(i);
+			if (-1 != browser.currentURI.spec.indexOf(tntfixer.pattern))
+    		{
+        		tabCount++;
+    		}
+		}
+
+		if (0 == tabCount)
+		{
+			return;
+		}
+
+		var wm = Components.classes['@mozilla.org/appshell/window-mediator;1']
+				.getService(Components.interfaces.nsIWindowMediator);
+
+		var windowIter = wm.getEnumerator('navigator:browser');
+		var currentWindow;	
+		while (windowIter.hasMoreElements())
+		{
+			currentWindow = windowIter.getNext();
+			currentWindow.tntfixer.matchedTabs =
+					currentWindow.tntfixer.matchedTabs - tabCount;
+		}
 	}
 };
 
 //	Initialize at startup
-window.addEventListener(
-	'load',
-	function()
-	{
-		tntfixer.init();
-	},
-	true
-);
+window.addEventListener('load', tntfixer.init, false);
 
