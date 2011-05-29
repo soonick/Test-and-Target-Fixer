@@ -270,6 +270,16 @@ var tntfixer =
 				true
 			);
 		}
+
+		//    Warn before saving an offer
+        if (saveButton)
+        {
+            currentDocument.body.addEventListener(
+                'click',
+                tntfixer.confirmSaveOffer,
+                true
+            );
+        }
 	},
 	/**
 	 *	confirmDisapproveCampaign
@@ -292,6 +302,27 @@ var tntfixer =
 			e.stopPropagation();
 		}
 	},
+	/**
+     *    confirmSaveOffer
+     *    Attaches a confirm dialog to the save offer button
+     *
+     *    @return    void
+     */
+    'confirmSaveOffer': function(e)
+    {
+        //    We only proceed when the actual save button was clicked
+        if ('offer-editor.save' != e.target.id)
+        {
+            return;
+        }
+
+        var text = 'Are you sure you want to save this offer? This change ' +
+                'will take effect inmediately.';
+        if (!confirm(text))
+        {
+            e.stopPropagation();
+        }
+    },
 	/**
      *	unload
      *	When a window is closed it subtracts its matched tabs from the matchedTabs
