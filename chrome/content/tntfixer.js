@@ -32,6 +32,27 @@ var tntfixer =
 		window.removeEventListener('load', tntfixer.init, false);
 		window.addEventListener("focus", tntfixer.getNumberOfTntTabs, false);
 
+		// Listen for changes on URL and add event listeners if necessary
+		var listener =
+		{
+			onLocationChange: function(progress, request, uri)
+			{
+				if (-1 != uri.host.indexOf(tntfixer.pattern))
+        		{
+        			if (content.document.body)
+        			{
+        				tntfixer.fixCurrentTab();severinaseverina
+        			}
+        			else
+        			{
+        				content.document.addEventListener('load', tntfixer.fixCurrentTab, true);
+        			}
+        		}
+			}
+		}
+		gBrowser.addProgressListener(listener,
+				Components.interfaces.nsIWebProgress.NOTIFY_LOCATION);
+
 		// Listeners to count tabs when opening or closing windows or tabs
 		var container = gBrowser.tabContainer;
 		container.addEventListener("TabClose", tntfixer.verifyClosedTab, true);
@@ -172,8 +193,6 @@ var tntfixer =
 			currentWindow = windowIter.getNext();
 			currentWindow.tntfixer.matchedTabs = tabCount;
 		}
-
-		tntfixer.matchedTabs = tabCount;
 	},
 	/**
 	 *	getCurrentDomain
@@ -188,34 +207,68 @@ var tntfixer =
 	 	return domain;
 	},
 	/**
+	 *	removeTabStyle
+	 *	Removes custom style attributes from a tab that was previously selected
+	 *
+	 *	@return	void
+	 */
+	'removeTabStyle': function(e)
+	{
+		if (false == e.target.selected)
+		{
+			e.target.style.removeProperty("background-color");
+			e.target.style.removeProperty("background-image");
+			e.target.style.removeProperty("color");
+			e.target.style.removeProperty("font-weight");
+			e.target.removeEventListener(
+				"TabAttrModified",
+				tntfixer.removeTabStyle,
+				false
+			);
+		}
+	},
+	/**
 	 *	fixCurrentTab
-	 *	Verifies if this is a Tnt tab. If it is neccesary listeners are attached
+	 *	Necessary listeners are attaced to tnt tab
 	 *
 	 *	@return	void
 	 */
 	'fixCurrentTab': function()
 	{
-		if (-1 != tntfixer.getCurrentDomain().indexOf(tntfixer.pattern))
+		//	Show in yellow if there are more than two Tnt instances
+		if (1 < tntfixer.matchedTabs)
 		{
-			var currentDocument = gBrowser.getBrowserForTab(gBrowser.selectedTab)
-					.contentDocument;
-			//	If the campaign is approved then alert that hitting save
-			//	deactivates the offer
-			var isActive = false;
-			var divs = currentDocument.getElementsByClassName('approved_campaign');
-			if ('approved' == divs[0].innerHTML.toLowerCase())
-			{
-				isActive = true;
-			}
-			if (isActive)
-			{
-				var saveButton = currentDocument.getElementById('campaign-save');
-				saveButton.parentNode.addEventListener(
-					'click',
-					tntfixer.confirmDisapproveCampaign,
-					true
-				);
-			}
+			gBrowser.selectedTab.style.setProperty("background-color", "#bb3", 'important');
+			gBrowser.selectedTab.style.setProperty("background-image", "none", 'important');
+			gBrowser.selectedTab.style.setProperty("color", "black", 'important');
+			gBrowser.selectedTab.style.setProperty("font-weight", "bold", 'important');
+		}
+
+		//	Remove custom styles when tab is no longer selected
+		gBrowser.selectedTab.addEventListener(
+			'TabAttrModified',
+			tntfixer.removeTabStyle,
+			false
+		);
+
+		var currentDocument = content.document;
+
+		//	If the campaign is approved then alert that hitting save
+		//	deactivates the offer
+		var isActive = false;
+		var divs = currentDocument.getElementsByClassName('approved_campaign');
+		if (divs[0] && 'approved' == divs[0].innerHTML.toLowerCase())
+		{
+			isActive = true;
+		}
+		if (isActive)
+		{
+			var saveButton = currentDocument.getElementById('campaign-save');
+			saveButton.parentNode.addEventListener(
+				'click',
+				tntfixer.confirmDisapproveCampaign,
+				true
+			);
 		}
 	},
 	/**
