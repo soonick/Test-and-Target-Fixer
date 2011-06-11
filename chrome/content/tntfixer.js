@@ -41,7 +41,7 @@ var tntfixer =
         		{
         			if (content.document.body)
         			{
-        				tntfixer.fixCurrentTab();severinaseverina
+        				tntfixer.fixCurrentTab();
         			}
         			else
         			{
@@ -77,7 +77,7 @@ var tntfixer =
 		//	Status bar icon
 		tntfixer.statusBarIcon = document.getElementById('tntFixerStatusBarIcon');
 		tntfixer.statusBarIcon.addEventListener('click',
-				tntfixer.toogleStatusBarIcon, false);
+				tntfixer.toggleStatusBarIcon, false);
 		tntfixer.statusBarIcon.setAttribute('value', status);
 
 		//	Start listening on current tab if status is active and current tab
@@ -92,12 +92,12 @@ var tntfixer =
 		}
 	},
 	/**
-	 *	toogleStatusBarIcon
+	 *	toggleStatusBarIcon
 	 *	Changes the color of the icon in the status bar when it is clicked
 	 *
 	 *	@return	void
 	 */
-	'toogleStatusBarIcon': function()
+	'toggleStatusBarIcon': function()
 	{
 		if ('active' == tntfixer.statusBarIcon.getAttribute('value'))
 		{
@@ -117,6 +117,10 @@ var tntfixer =
 			currentWindow = windowIter.getNext();
 			currentWindow.tntfixer.statusBarIcon.setAttribute('value', newStatus);
 			currentWindow.tntfixer.preferences.setCharPref('status', newStatus);
+			if ('active' != newStatus)
+			{
+				currentWindow.tntfixer.unfixAllTabs();
+			}
 		}
 	},
 	/**
@@ -235,6 +239,12 @@ var tntfixer =
 	 */
 	'fixCurrentTab': function()
 	{
+		//	If the plugin is inactive we don't do anything
+		if ('active' != tntfixer.statusBarIcon.getAttribute('value'))
+		{
+			return true;
+		}
+
 		//	Show in yellow if there are more than two Tnt instances
 		if (1 < tntfixer.matchedTabs)
 		{
@@ -360,9 +370,56 @@ var tntfixer =
 			currentWindow.tntfixer.matchedTabs =
 					currentWindow.tntfixer.matchedTabs - tabCount;
 		}
+	},
+	/**
+	 *	unfixAllTabs
+	 *	Removes all fixes from all tabs on this window
+	 *
+	 *	@return	void
+	 */
+	'unfixAllTabs': function()
+	{
+		var tabbrowser = window.getBrowser();
+
+		//	If tab was highlighted we remove the styles
+		var selTab = tabbrowser.selectedTab;
+		selTab.style.removeProperty("background-color");
+		selTab.style.removeProperty("background-image");
+		selTab.style.removeProperty("color");
+		selTab.style.removeProperty("font-weight");
+		selTab.removeEventListener(
+			"TabAttrModified",
+			tntfixer.removeTabStyle,
+			false
+		);
+
+		for (var i = 0; i < tabbrowser.browsers.length; i++)
+		{
+			var currentDocument = tabbrowser.getBrowserAtIndex(i).contentDocument;
+
+			// Remove the alert when saving a campaign
+			var saveButton = currentDocument.getElementById('campaign-save');
+			if (saveButton)
+			{
+				saveButton.parentNode.removeEventListener(
+					'click',
+					tntfixer.confirmDisapproveCampaign,
+					true
+				);
+			}
+
+			// Remove alert when saving an offer
+			if (saveButton)
+			{
+				currentDocument.body.removeEventListener(
+					'click',
+					tntfixer.confirmSaveOffer,
+					true
+				);
+			}
+		}
 	}
 };
 
 //	Initialize at startup
 window.addEventListener('load', tntfixer.init, false);
-
